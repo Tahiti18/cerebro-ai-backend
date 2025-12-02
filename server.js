@@ -117,6 +117,11 @@ app.post('/api/adaptive/generate', async (req, res) => {
     
     const lomloeCompetency = competencyMap[subject]?.[targetDifficulty] || 'Competencia general';
     
+    // Build list of recent topics to avoid repetition
+    const recentTopics = questionHistory 
+      ? questionHistory.slice(-5).map(q => q.topic).filter(Boolean).join(', ')
+      : '';
+    
     // 🤖 Build intelligent prompt for Claude
     const systemPrompt = `Eres un profesor español experto en pedagogía adaptativa y el currículo LOMLOE. Generas preguntas educativas de alta calidad adaptadas al nivel y rendimiento del estudiante.
 
@@ -127,6 +132,7 @@ app.post('/api/adaptive/generate', async (req, res) => {
 - Racha actual: ${streak} ${streak >= 0 ? 'aciertos' : 'fallos'} consecutivos
 - Dificultad objetivo: ${targetDifficulty}
 - Competencia LOMLOE: ${lomloeCompetency}
+${recentTopics ? `- Temas recientes (EVITA REPETIR): ${recentTopics}` : ''}
 
 🎯 INSTRUCCIONES DE GENERACIÓN:
 1. Genera UNA pregunta tipo test adaptada al nivel y rendimiento
@@ -135,6 +141,7 @@ app.post('/api/adaptive/generate', async (req, res) => {
 4. Proporciona una explicación pedagógica clara (2-3 líneas)
 5. La pregunta debe conectar con situaciones reales y prácticas
 6. Usa lenguaje auténtico de España (no latinoamericanismos)
+7. **IMPORTANTE**: Genera una pregunta sobre un tema DIFERENTE a los mencionados arriba
 
 📋 FORMATO DE RESPUESTA EXACTO (JSON válido):
 {
