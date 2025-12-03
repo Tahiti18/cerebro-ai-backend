@@ -517,6 +517,90 @@ Conversation so far: ${JSON.stringify(conversationHistory || [])}`;
 });
 
 
+// 🔊 OPENAI TEXT-TO-SPEECH API
+app.post('/api/language/speak', async (req, res) => {
+  try {
+    const { text, language, voice = 'nova' } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Text is required' 
+      });
+    }
+    
+    console.log(`🔊 OpenAI TTS: "${text.substring(0, 50)}..." (${language}, voice: ${voice})`);
+    
+    // Try to use OpenAI API key from environment
+    const openaiKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
+    
+    if (!openaiKey) {
+      console.log('⚠️ No OpenAI key found, falling back to browser speech');
+      return res.json({
+        success: true,
+        audioUrl: null,
+        useNativeSpeech: true,
+        message: 'No API key - using browser speech'
+      });
+    }
+    
+    // Call OpenAI TTS API
+    const ttsResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'tts-1',  // or 'tts-1-hd' for higher quality
+        input: text,
+        voice: voice,  // alloy, echo, fable, onyx, nova, shimmer
+        response_format: 'mp3',
+        speed: 1.0
+      })
+    });
+    
+    if (!ttsResponse.ok) {
+      const errorText = await ttsResponse.text();
+      console.error('❌ OpenAI TTS failed:', ttsResponse.status, errorText);
+      
+      // Fallback to browser speech
+      return res.json({
+        success: true,
+        audioUrl: null,
+        useNativeSpeech: true,
+        message: 'OpenAI TTS failed - using browser fallback'
+      });
+    }
+    
+    // Get audio buffer
+    const audioBuffer = await ttsResponse.arrayBuffer();
+    const audioBase64 = Buffer.from(audioBuffer).toString('base64');
+    
+    console.log('✅ OpenAI TTS success:', Math.round(audioBuffer.byteLength / 1024), 'KB');
+    
+    res.json({
+      success: true,
+      audioUrl: `data:audio/mp3;base64,${audioBase64}`,
+      useNativeSpeech: false,
+      provider: 'openai',
+      voice: voice,
+      size: audioBuffer.byteLength
+    });
+    
+  } catch (error) {
+    console.error('❌ TTS Error:', error);
+    
+    // Fallback to browser speech
+    res.json({
+      success: true,
+      audioUrl: null,
+      useNativeSpeech: true,
+      message: 'Error - using browser fallback'
+    });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
