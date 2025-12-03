@@ -543,7 +543,7 @@ Conversation so far: ${JSON.stringify(conversationHistory || [])}`;
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log('🧠 ========================================');
-  console.log('🧠 CEREBRO AI BACKEND');
+  console.log('🧠 CEREBRO AI BACKEND + POLYGLOT AI');
   console.log('🧠 ========================================');
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
