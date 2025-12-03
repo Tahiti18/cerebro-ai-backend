@@ -328,30 +328,6 @@ app.post('/api/adaptive/analytics', async (req, res) => {
   }
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    error: 'Endpoint not found',
-    availableEndpoints: [
-      'GET /health',
-      'GET /api',
-      'POST /api/adaptive/generate',
-      'POST /api/adaptive/analytics'
-    ]
-  });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ 
-    success: false, 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
-
 // 🌍 POLYGLOT AI - LANGUAGE LEARNING API
 app.post('/api/language/conversation', async (req, res) => {
   try {
@@ -539,6 +515,29 @@ Conversation so far: ${JSON.stringify(conversationHistory || [])}`;
   }
 });
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false, 
+    error: 'Endpoint not found',
+    availableEndpoints: [
+      'GET /health',
+      'GET /api',
+      'POST /api/adaptive/generate',
+      'POST /api/adaptive/analytics'
+    ]
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    success: false, 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
@@ -548,6 +547,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🤖 AI Model: Claude 3.5 Sonnet`);
-  console.log(`🔑 API Key: ${process.env.OPENROUTER_API_KEY ? '✅ Configured' : '❌ Missing'}`);
-  console.log('🧠 ========================================');
-});
