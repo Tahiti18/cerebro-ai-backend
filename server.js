@@ -328,6 +328,7 @@ app.post('/api/adaptive/analytics', async (req, res) => {
   }
 });
 
+
 // 🌍 POLYGLOT AI - LANGUAGE LEARNING API
 app.post('/api/language/conversation', async (req, res) => {
   try {
@@ -515,6 +516,7 @@ Conversation so far: ${JSON.stringify(conversationHistory || [])}`;
   }
 });
 
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
@@ -542,8 +544,11 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log('🧠 ========================================');
-  console.log('🧠 CEREBRO AI BACKEND + POLYGLOT AI');
+  console.log('🧠 CEREBRO AI BACKEND');
   console.log('🧠 ========================================');
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🤖 AI Model: Claude 3.5 Sonnet`);
+  console.log(`🔑 API Key: ${process.env.OPENROUTER_API_KEY ? '✅ Configured' : '❌ Missing'}`);
+  console.log('🧠 ========================================');
+});
