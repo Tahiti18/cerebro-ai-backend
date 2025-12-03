@@ -517,7 +517,7 @@ Conversation so far: ${JSON.stringify(conversationHistory || [])}`;
 });
 
 
-// 🔊 OPENAI TEXT-TO-SPEECH API
+// 🔊 OPENAI TEXT-TO-SPEECH API (v1.0)
 app.post('/api/language/speak', async (req, res) => {
   try {
     const { text, language, voice = 'nova' } = req.body;
