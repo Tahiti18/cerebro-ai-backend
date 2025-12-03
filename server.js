@@ -142,6 +142,7 @@ ${recentTopics ? `- Temas recientes (EVITA REPETIR): ${recentTopics}` : ''}
 5. La pregunta debe conectar con situaciones reales y prácticas
 6. Usa lenguaje auténtico de España (no latinoamericanismos)
 7. **IMPORTANTE**: Genera una pregunta sobre un tema DIFERENTE a los mencionados arriba
+8. ❌ **PROHIBIDO**: NO generes preguntas que requieran imágenes, fotos, diagramas, gráficos o cualquier contenido visual. La pregunta debe ser 100% basada en texto y auto-contenida
 
 📋 FORMATO DE RESPUESTA EXACTO (JSON válido):
 {
