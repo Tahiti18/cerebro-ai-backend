@@ -363,3 +363,191 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔑 API Key: ${process.env.OPENROUTER_API_KEY ? '✅ Configured' : '❌ Missing'}`);
   console.log('🧠 ========================================');
 });
+
+// 🌍 POLYGLOT AI - LANGUAGE LEARNING API
+app.post('/api/language/conversation', async (req, res) => {
+  try {
+    const { language, level, scenario, userMessage, conversationHistory } = req.body;
+    
+    if (!language || !level || !scenario) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: language, level, scenario'
+      });
+    }
+    
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'API key not configured'
+      });
+    }
+    
+    // Build conversation context
+    const isFirstMessage = !userMessage || userMessage === '';
+    
+    const systemPrompt = `You are a friendly and patient ${language} language tutor for ${level} level students.
+
+🎯 YOUR ROLE:
+- Have a natural conversation in ${language} about the "${scenario}" scenario
+- Keep your responses SHORT (2-3 sentences maximum)
+- Use vocabulary appropriate for ${level} level
+- Correct mistakes GENTLY if the student makes errors
+- Ask follow-up questions to keep the conversation flowing
+- Be encouraging and supportive
+
+📋 SCENARIO CONTEXT: ${scenario}
+${isFirstMessage ? `\n🌟 IMPORTANT: This is the START of the conversation. Greet the student warmly in ${language} and set up the ${scenario} scenario. For example, if it's a Restaurant scenario, you could be a waiter asking what they'd like to order.` : ''}
+
+⚠️ RULES:
+- Respond ONLY in ${language} (no English unless student is really struggling)
+- Keep it conversational and natural
+- Don't lecture - have a dialogue
+- Match the student's level - don't use overly complex grammar or vocabulary
+
+Student Level: ${level}
+Conversation History: ${conversationHistory ? JSON.stringify(conversationHistory.slice(-6)) : '[]'}`;
+
+    const messages = [
+      { role: 'system', content: systemPrompt }
+    ];
+    
+    // Add conversation history
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationHistory.slice(-6).forEach(msg => {
+        messages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
+      });
+    }
+    
+    // Add current user message (if not first message)
+    if (!isFirstMessage) {
+      messages.push({
+        role: 'user',
+        content: userMessage
+      });
+    }
+    
+    console.log('🌐 Calling OpenRouter for language conversation:', { language, level, scenario, isFirstMessage });
+    
+    const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://polyglot-ai.netlify.app',
+        'X-Title': 'Polyglot AI - Language Learning'
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-3.5-sonnet',
+        messages: messages,
+        temperature: 0.8, // More creative for natural conversation
+        max_tokens: 200 // Short responses
+      })
+    });
+    
+    if (!openRouterResponse.ok) {
+      const errorText = await openRouterResponse.text();
+      console.error('OpenRouter API error:', errorText);
+      throw new Error(`OpenRouter API failed: ${openRouterResponse.statusText}`);
+    }
+    
+    const data = await openRouterResponse.json();
+    const aiMessage = data.choices[0].message.content.trim();
+    
+    console.log('✅ AI conversation response:', aiMessage.substring(0, 100) + '...');
+    
+    // Analyze for corrections (simple check)
+    let corrections = [];
+    if (!isFirstMessage && userMessage) {
+      // This is a simplified version - Claude could provide corrections in a structured way
+      // For now, we'll skip detailed corrections to keep responses fast
+    }
+    
+    res.json({
+      success: true,
+      aiMessage: aiMessage,
+      corrections: corrections,
+      metadata: {
+        language,
+        level,
+        scenario,
+        tokens: data.usage || {}
+      }
+    });
+    
+  } catch (error) {
+    console.error('Conversation error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating conversation'
+    });
+  }
+});
+
+// 💡 Hint endpoint
+app.post('/api/language/hint', async (req, res) => {
+  try {
+    const { language, level, scenario, conversationHistory } = req.body;
+    
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'API key not configured'
+      });
+    }
+    
+    const systemPrompt = `You are a ${language} language tutor. The student is in a ${scenario} scenario at ${level} level.
+
+Based on the conversation so far, give them a SHORT helpful hint (1 sentence) about what they could say next in ${language}.
+
+Provide the hint in ENGLISH so they understand, but include the ${language} phrase they could use.
+
+Example format: "You could ask about the price by saying: '¿Cuánto cuesta?'"
+
+Conversation so far: ${JSON.stringify(conversationHistory || [])}`;
+    
+    const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-3.5-sonnet',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: 'Give me a hint for what to say next.' }
+        ],
+        temperature: 0.7,
+        max_tokens: 100
+      })
+    });
+    
+    if (!openRouterResponse.ok) {
+      throw new Error('Failed to generate hint');
+    }
+    
+    const data = await openRouterResponse.json();
+    const hint = data.choices[0].message.content.trim();
+    
+    res.json({
+      success: true,
+      hint: hint
+    });
+    
+  } catch (error) {
+    console.error('Hint error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating hint'
+    });
+  }
+});
+
